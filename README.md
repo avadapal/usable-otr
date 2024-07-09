@@ -5,7 +5,7 @@ DenIM is a client-to-client instant messaging client offering enhanced deniabili
 
 ![](./assets/images/sock.jpg)
 
-Built using C++ and powered by Boost and Botan libraries, DenIM is an instance of usable OTR (Off-The-Record) application based on the OTR messaging protocol, accessible to a user even with no security background. 
+Built using C++ and powered by Boost and Botan libraries, DenIM is an instance of usable OTR (Off-The-Record) application based on the OTR messaging protocol, accessible even to a user with no security background. 
 
 DenIM offers an encrypted socket-based communication using the standard AES-256 encryption, with a new key derived using Diffie-Hellman(DH) Key Exchange between the parties after each instance of message exchange.
 
