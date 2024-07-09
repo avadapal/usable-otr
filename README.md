@@ -55,7 +55,7 @@ cmake --build /. --config Debug --target all -j 12 --
 ```
 
 ## Usage
-After running the command, enter your IP address and a dedicated port for establishing the communication:
+After building, run the program and enter your IP address and a dedicated port for establishing the communication:
 
 ![](./assets/images/ip.jpg)
 
