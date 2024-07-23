@@ -6,6 +6,8 @@
 #include <string>
 #include <sqlite3.h>
 
+std::atomic<bool> edit_enabled = false;
+
 std::atomic<bool> command_entered = false;
 
 void execute_sql(sqlite3* DB, const std::string& sql) {
@@ -70,8 +72,7 @@ void edit_message(const std::string& dbname, std::size_t id) {
     sqlite3_close(DB);
 }
 
-void delete_message(const std::string& dbname, std::size_t id)
-{
+void delete_message(const std::string& dbname, std::size_t id) {
     sqlite3* DB;
     sqlite3_open(dbname.c_str(), &DB);
 
@@ -84,7 +85,12 @@ void delete_message(const std::string& dbname, std::size_t id)
 
 bool executeCommands(std::string message, const std::string& dbname) {
     message.erase(std::remove_if(message.begin(), message.end(), ::isspace), message.end());
-    if (message == ":e") 
+    if (message == ":v") 
+    {
+        displayMessageHistory(dbname);
+        return true;
+    }
+    else if (edit_enabled && message == ":e") 
     {
         displayMessageHistory(dbname);
         std::string id;
@@ -93,13 +99,8 @@ bool executeCommands(std::string message, const std::string& dbname) {
         edit_message(dbname, std::stoi(id));
         std::cout << "Updated!\n";
         return true;
-    } 
-    else if (message == ":v") 
-    {
-        displayMessageHistory(dbname);
-        return true;
-    } 
-    else if (message == ":d")
+    }  
+    else if (edit_enabled && message == ":d")
     {
         displayMessageHistory(dbname);
         std::string id;
@@ -112,8 +113,11 @@ bool executeCommands(std::string message, const std::string& dbname) {
     else if (message == ":h") 
     {
         std::cout << ":v - View Message History\n";
+        if(edit_enabled)
+        {
         std::cout << ":e - Edit Message\n";
         std::cout << ":d - Delete Message\n";
+        }
         std::cout << ":q - Quit\n";
         return true;
     } else if (message == ":q")
