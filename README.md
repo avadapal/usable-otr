@@ -7,9 +7,15 @@ DenIM is a client-to-client instant messaging client offering enhanced deniabili
 
 Built using C++ and powered by Boost and Botan libraries, DenIM is an instance of usable OTR (Off-The-Record) application based on the OTR messaging protocol, accessible to a user even with no security background. 
 
-DenIM offers an encrypted socket-based communication using the standard AES-256 encryption, with a new key derived using Diffie-Hellman(DH) Key Exchange between the parties after each instance of message exchange.
+DenIM offers an encrypted socket-based communication using the standard AES-256 encryption, with a new key derived using Triple Diffie-Hellman(3DH) Key Exchange between the parties after each instance of message exchange.
 
-![](./assets/images/keyex.jpg)
+The "three Diffie-Hellman" part involves performing three distinct Diffie-Hellman key exchange operations. Each of these operations generates a shared secret between two parties. The outputs of these three Diffie-Hellman exchanges are then concatenated to form a single, combined data stream. This concatenated stream is subsequently input into a hash function, which processes it to derive a final cryptographic key. 
+
+The 3DH key exchange protocol was proved deniable by N Vatandas et al. in their work "On the Cryptographic Deniability of the Signal Protocol" [(link to the paper)](https://eprint.iacr.org/2021/642.pdf)
+
+![](./assets/images/3dh_keyex.jpg)
+
+
 
 **Key Features**
 
