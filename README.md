@@ -5,7 +5,7 @@ DenIM is a client-to-client instant messaging client offering enhanced deniabili
 
 ![](./assets/images/sock.jpg)
 
-Built using C++ and powered by Boost and Botan libraries, DenIM is an instance of usable OTR (Off-The-Record) application based on the OTR messaging protocol, accessible even to a user with no security background. 
+Built using C++ and powered by Boost and Botan libraries, DenIM is an instance of usable OTR (Off-The-Record) application based on the OTR messaging protocol, accessible to a user even with no security background. 
 
 DenIM offers an encrypted socket-based communication using the standard AES-256 encryption, with a new key derived using Diffie-Hellman(DH) Key Exchange between the parties after each instance of message exchange.
 
@@ -55,10 +55,45 @@ cmake --build /. --config Debug --target all -j 12 --
 ```
 
 ## Usage
-After building, run the program and enter your IP address and a dedicated port for establishing the communication:
+Select the desired mode of operation
 
-![](./assets/images/ip.jpg)
+Connect with an user to start a communication session
 
+**In-session commands**
+> 1. To view the message history, enter ":v"
+
+> 2. To edit a sent/received message, enter ":e" and then enter the particular index of the respective message
+
+> 3. To delete a sent/received message, enter ":d" and then enter the particular index of the respective message
+
+
+## Snapshots 
+
+DenIM's welcome screen
+
+![](./assets/images/welcome.jpg)
+
+Starting a communication session
+
+![](./assets/images/mode.jpg)
+
+![](./assets/images/connect.jpg)
+
+An ongoing session
+
+![](./assets/images/session.jpg)
+
+Message history
+
+![](./assets/images/history.jpg)
+
+Editing a message
+
+![](./assets/images/edit.jpg)
+
+Deleting a message
+
+![](./assets/images/delete.jpg)
 
 ## Contributing
 
