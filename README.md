@@ -19,7 +19,7 @@ The 3DH key exchange protocol was proved deniable by N Vatandas et al. in their 
 
 **Key Features**
 
-1. **Deniability for both parties**
+1. **Cryptographic Deniability for both parties**
 > DenIM's underlying communication protocol is deniable with the ability of editing the sent and received messages for both of the parties participating in a session.
 
 2. **Perfect Forward Secrecy**
