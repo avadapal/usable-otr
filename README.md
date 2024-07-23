@@ -69,29 +69,29 @@ Connect with an user to start a communication session
 
 ## Snapshots 
 
-DenIM's welcome screen
+**DenIM's welcome screen**
 
 ![](./assets/images/welcome.jpg)
 
-Starting a communication session
+**Starting a communication session**
 
 ![](./assets/images/mode.jpg)
 
 ![](./assets/images/connect.jpg)
 
-An ongoing session
+**An ongoing session**
 
 ![](./assets/images/session.jpg)
 
-Message history
+**Message history**
 
 ![](./assets/images/history.jpg)
 
-Editing a message
+**Editing a message**
 
 ![](./assets/images/edit.jpg)
 
-Deleting a message
+**Deleting a message**
 
 ![](./assets/images/delete.jpg)
 
