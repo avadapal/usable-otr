@@ -14,6 +14,7 @@ void setup_mode()
     std::cout<<"DenIM offers two modes of security\n";
     std::cout<<"1. Deniable Mode\n";
     std::cout<<"2. Ultra-Deniable Mode\n";
+    std::cout<<"3. Non-Deniable Mode\n";
     
     std::string mode;
     
@@ -28,10 +29,15 @@ void setup_mode()
         {
             edit_enabled = true;
             return;
+        } else if(mode == "3")
+        {
+            ds_enabled = true;
+            return;
         } else if(mode == "man")
         {
             std::cout<<"Deniable mode offers superficial deniability only on the basis of key exchange\n";
             std::cout<<"Ultra-deniable mode offers an extra layer of deniability by providing a feature to edit/delete the sent and received messages\n";
+            std::cout<<"Non-deniable mode sends/receives the message using the non-deniable Digital Signature scheme";
         } else 
             std::cout<<"Invalid Choice! Please enter again\n";
     }
