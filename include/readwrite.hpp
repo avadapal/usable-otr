@@ -1,5 +1,5 @@
-#ifndef READWRITE_HPP
-#define READWRITE_HPP
+#ifndef READWRITEDS_HPP
+#define READWRITEDS_HPP
 
 #include <boost/asio.hpp>
 #include <boost/archive/text_oarchive.hpp>  // boost::archive::text_oarchive
@@ -17,6 +17,8 @@ using clk = std::chrono::system_clock;
 using tcp = boost::asio::ip::tcp;
 using msg = std::vector<std::pair<std::chrono::time_point<clk>, std::string>>;
 namespace asio = boost::asio;
+
+std::atomic<bool> ds_enabled = false;
 
 void read_data_packet(tcp::socket& socket, Message& msg)
 {   
@@ -55,7 +57,7 @@ void send_data_packet(tcp::socket& socket, const Message& msg)
     boost::asio::write(socket, buffers);
 }
 
-void read_from_socket(tcp::socket& socket, const std::string& dbname, const Botan::secure_vector<uint8_t>& key) {
+void read_from_socket(tcp::socket& socket, const std::string& dbname, const Botan::secure_vector<uint8_t>& key, const std::string& ds_pass) {
     try 
     {
         // Create a DB pointer and load the message DB for logging 
@@ -81,10 +83,23 @@ void read_from_socket(tcp::socket& socket, const std::string& dbname, const Bota
         if(hmac_tag != msg_pkt.get_mac_tag())
         {
             std::cout<<"MAC TAGS MISMATCH!"<<std::endl<<"TERMINATING.."<<std::endl;
-            return;
+            exit(0);
         }
 
-        // Log the message if MAC tag is verified
+        if(ds_enabled)
+        {
+            // Verify the digital signature
+            auto ds_key = Botan::PKCS8::load_key(msg_pkt.get_serial_pk_key(), ds_pass);
+            Botan::PK_Verifier verifier(*ds_key, "SHA-256");
+            verifier.update(message);
+            if(!verifier.check_signature(msg_pkt.get_signature()))
+            {
+                std::cout<<"SIGNATURE VERIFICATION FAILED!"<<std::endl<<"TERMINATING.."<<std::endl;
+                exit(0);
+            }
+        }
+
+        // Log the message if MAC tag is verified and signature is verified
         std::time_t timestamp = clk::to_time_t(clk::now());
         if (!(message == ":e" || message == ":v" || message == ":h" || message == ":d" || message == ":q"))
         {
@@ -103,7 +118,7 @@ void read_from_socket(tcp::socket& socket, const std::string& dbname, const Bota
     }
 }
 
-void write_to_socket(tcp::socket& socket, const std::string& dbname, const Botan::secure_vector<uint8_t>& key) {
+void write_to_socket(tcp::socket& socket, const std::string& dbname, const Botan::secure_vector<uint8_t>& key, const std::string& ds_pass) {
     try 
     {
         sqlite3* DB;
@@ -122,9 +137,21 @@ void write_to_socket(tcp::socket& socket, const std::string& dbname, const Botan
             // Encrypt the message with the key before sending and compute MAC tag
             std::string enc_msg = crypto::encrypt_message(key, message);
             std::string mac_tag = crypto::compute_mac(message,key);
+            Message msg_pkt(enc_msg,mac_tag);
+            if(ds_enabled)
+            {
+                // Sign using ECDSA Private Key
+                Botan::AutoSeeded_RNG rng;
+                Botan::ECDSA_PrivateKey ds_key(rng, Botan::EC_Group("secp521r1"));
+                Botan::PK_Signer signer(ds_key, rng, "SHA-256");
+                signer.update(message);
+                std::vector<uint8_t> signature = signer.signature(rng);
+                std::vector<uint8_t> serial_pk_key = Botan::PKCS8::BER_encode(ds_key, rng, ds_pass);
 
-            // Bind the encrypted message and MAC tag in a packet and send it over the socket
-            Message msg_pkt(enc_msg, mac_tag);
+                // Bind the encrypted message and MAC tag along with the signature in a packet and send it over the socket
+                Message msg_pkt_ds(enc_msg, mac_tag, signature, serial_pk_key);
+                msg_pkt = msg_pkt_ds;
+            }
             send_data_packet(socket, msg_pkt);
         } else command_entered = true;
 
