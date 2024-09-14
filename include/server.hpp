@@ -7,16 +7,17 @@
 #include <atomic>
 #include <string>
 #include <memory>
-#include "readwrite.hpp"
 #include "client.hpp"
+#include "readwriteds.hpp"
 
 std::atomic<bool> client_accepted = false;
 std::atomic<bool> keyex_socket_est = false;     // False == Key exchange socket not established yet and vice-versa
 Botan::secure_vector<uint8_t> shared_key;
+std::string ds_pass;
 
 void start_keyex(std::shared_ptr<tcp::socket> keyex_socket, Botan::secure_vector<uint8_t>& shared_key)
 {
-    key_exchange_server(*keyex_socket,shared_key);
+    key_exchange_server(*keyex_socket,shared_key, ds_pass);
 }
 
 void keyex_socket_accept(tcp::acceptor& keyex_acceptor, std::shared_ptr<tcp::socket> keyex_socket)
@@ -69,8 +70,8 @@ void handle_connection_signal(boost::asio::io_context& io_context) {
 void handle_client(std::shared_ptr<tcp::socket> socket, const std::string& dbname, const Botan::secure_vector<uint8_t>& key) {
     try {
         
-        std::thread write_thread(write_to_socket, std::ref(*socket), dbname, std::ref(key));
-        std::thread read_thread(read_from_socket, std::ref(*socket), dbname, std::ref(key));
+        std::thread write_thread(write_to_socket, std::ref(*socket), dbname, std::ref(key), ds_pass);
+        std::thread read_thread(read_from_socket, std::ref(*socket), dbname, std::ref(key), ds_pass);
         
         write_thread.join();
         read_thread.detach();
