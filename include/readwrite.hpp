@@ -1,5 +1,5 @@
-#ifndef READWRITEDS_HPP
-#define READWRITEDS_HPP
+#ifndef READWRITE_HPP
+#define READWRITE_HPP
 
 #include <boost/asio.hpp>
 #include <boost/archive/text_oarchive.hpp>  // boost::archive::text_oarchive
