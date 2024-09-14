@@ -21,7 +21,7 @@ std::atomic<bool> server_pk_sent = false;
 std::atomic<bool> key_exchange_status_server = false; // False = Key Exchange Not done && True = Done
 std::atomic<bool> key_exchange_status_client = false;
 
-void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t>& shared_key)
+void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t>& shared_key, std::string& ds_pass)
 {
     char data[2048];
     boost::system::error_code error;
@@ -30,6 +30,8 @@ void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
     boost::asio::write(keyex_socket, boost::asio::buffer(KEYEX_INIT), error);
     if (error) {
         std::cerr << "Client: Error sending INIT_DHKE: " << error.message() << "\n";
+        if(error.message() == "Connection reset by peer")
+            exit(0);
         return;
     }
     init_dhke_flag = true;
@@ -61,6 +63,11 @@ void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
         auto server_public_key1 = Botan::hex_decode(crypto::receive_pubkey(keyex_socket)); // B = g^b
         server_pk_sent = false;     // Set this flag back to false after receiving the key
 
+        // Compute the password to unlock the signature
+        Botan::PK_Key_Agreement dig_sign_key_agreement(client_private_key1, rng, kdf);
+        auto dig_sign_key = dig_sign_key_agreement.derive_key(32, server_public_key1).bits_of();
+        ds_pass = Botan::hex_encode(dig_sign_key);
+
         // Client generates second DH key pair
         Botan::DH_PrivateKey client_private_key2(rng, domain); // x
         auto client_public_key2 = client_private_key2.public_value(); // X = g^x
@@ -84,6 +91,7 @@ void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
         auto hash = Botan::HashFunction::create_or_throw("SHA-512");
         hash->update(key.data(), key.size());
         auto key_hash = hash->final();
+        ds_pass = Botan::hex_encode(key_hash);
 
         auto kdf2 = Botan::KDF::create_or_throw("SP800-56A(SHA-256)");
         shared_key = kdf2->derive_key(32,key_hash);
@@ -92,7 +100,7 @@ void key_exchange_client(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
     }
 }   
 
-void key_exchange_server(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t>& shared_key)
+void key_exchange_server(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t>& shared_key, std::string& ds_pass)
 {
     char data[2048];
     boost::system::error_code error;
@@ -129,9 +137,14 @@ void key_exchange_server(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
 
     // Receive the client's public key and send the computed server's public key
     client_pk_sent = false; 
-     auto client_public_key1 = Botan::hex_decode(crypto::receive_pubkey(keyex_socket)); // A = g^a
+    auto client_public_key1 = Botan::hex_decode(crypto::receive_pubkey(keyex_socket)); // A = g^a
     crypto::send_pubkey(keyex_socket, Botan::hex_encode(server_public_key1));
     server_pk_sent = true;
+
+    // Compute the password for unlocking the digital signature
+    Botan::PK_Key_Agreement dig_sign_key_agreement(server_private_key1, rng, kdf);
+    auto dig_sign_key = dig_sign_key_agreement.derive_key(32, client_public_key1);
+    ds_pass = Botan::hex_encode(dig_sign_key);
 
     // Server generates second DH key pair
     Botan::DH_PrivateKey server_private_key2(rng, domain);   // y
@@ -156,6 +169,7 @@ void key_exchange_server(tcp::socket& keyex_socket, Botan::secure_vector<uint8_t
     auto hash = Botan::HashFunction::create_or_throw("SHA-512");
     hash->update(key.data(), key.size());
     auto key_hash = hash->final();
+    ds_pass = Botan::hex_encode(key_hash);
 
     auto kdf2 = Botan::KDF::create_or_throw("SP800-56A(SHA-256)");
     shared_key = kdf2->derive_key(32,key_hash);
